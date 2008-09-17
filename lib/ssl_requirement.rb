@@ -50,13 +50,26 @@ module SslRequirement
       return true if ssl_allowed?
 
       if ssl_required? && !request.ssl?
-        redirect_to "https://" + request.host + request.request_uri
-        flash.keep
+        redirect_with_javascript(:https, request)
         return false
       elsif request.ssl? && !ssl_required?
-        redirect_to "http://" + request.host + request.request_uri
-        flash.keep
+        redirect_with_javascript(:http, request)
         return false
       end
+    end
+
+    def redirect_with_javascript(protocol, request)
+      url = "#{protocol.to_s}://#{request.host}#{request.request_uri}"
+      render :text => <<-EOS
+<html>
+<head>
+<meta http-equiv="refresh" content="0; url=#{url}">
+<script type="text/javascript">
+location.href = "#{url}";
+</script>
+</head>
+<body />
+</html>
+      EOS
     end
 end
